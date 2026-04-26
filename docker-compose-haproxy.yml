@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres_lb
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: practice_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - lb_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_lb
+    volumes:
+      - redis_data:/data
+    networks:
+      - lb_network
+
+  backend1:
+    build: ./backend
+    container_name: backend1
+    environment:
+      PORT: 3000
+      SERVER_ID: "backend_1"
+      PG_HOST: postgres
+      REDIS_HOST: redis
+    networks:
+      - lb_network
+
+  backend2:
+    build: ./backend
+    container_name: backend2
+    environment:
+      PORT: 3000
+      SERVER_ID: "backend_2"
+      PG_HOST: postgres
+      REDIS_HOST: redis
+    networks:
+      - lb_network
+
+  backend3:
+    build: ./backend
+    container_name: backend3
+    environment:
+      PORT: 3000
+      SERVER_ID: "backend_3_backup"
+      PG_HOST: postgres
+      REDIS_HOST: redis
+    networks:
+      - lb_network
+
+  # HAProxy вместо Nginx
+  haproxy:
+    image: haproxy:latest
+    container_name: haproxy_lb
+    ports:
+      - "80:80"
+      - "8404:8404"
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    depends_on:
+      - backend1
+      - backend2
+      - backend3
+    networks:
+      - lb_network
+
+networks:
+  lb_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

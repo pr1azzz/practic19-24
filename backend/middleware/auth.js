@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
 
-// Middleware для проверки JWT токена
 const authMiddleware = (req, res, next) => {
     const authHeader = req.headers.authorization;
     
@@ -15,26 +14,20 @@ const authMiddleware = (req, res, next) => {
         req.user = payload;
         next();
     } catch (err) {
-        return res.status(401).json({ error: 'Недействительный или просроченный токен' });
+        return res.status(401).json({ error: 'Недействительный токен' });
     }
 };
 
-// Middleware для проверки роли
 const roleMiddleware = (allowedRoles) => {
     return (req, res, next) => {
-        if (!req.user) {
-            return res.status(401).json({ error: 'Требуется авторизация' });
-        }
-        
+        if (!req.user) return res.status(401).json({ error: 'Требуется авторизация' });
         if (!allowedRoles.includes(req.user.role)) {
             return res.status(403).json({ error: 'Недостаточно прав' });
         }
-        
         next();
     };
 };
 
-// Генерация Access Token
 const generateAccessToken = (user) => {
     return jwt.sign(
         { sub: user.id, username: user.username, role: user.role },
@@ -43,18 +36,4 @@ const generateAccessToken = (user) => {
     );
 };
 
-// Генерация Refresh Token
-const generateRefreshToken = (user) => {
-    return jwt.sign(
-        { sub: user.id, username: user.username, role: user.role },
-        process.env.REFRESH_SECRET,
-        { expiresIn: '7d' }
-    );
-};
-
-module.exports = {
-    authMiddleware,
-    roleMiddleware,
-    generateAccessToken,
-    generateRefreshToken
-};
+module.exports = { authMiddleware, roleMiddleware, generateAccessToken };
