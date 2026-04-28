@@ -2,11 +2,13 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Копируем package.json и устанавливаем зависимости
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install
 
+# Копируем ВЕСЬ код из папки backend
 COPY . .
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["node", "server-simple.js"]

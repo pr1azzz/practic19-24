@@ -88,9 +88,9 @@ const startServer = async () => {
     await initPostgres();
     await initRedis();
     
-    app.listen(PORT, () => {
-        console.log(`✅ ${SERVER_ID} запущен на порту ${PORT}`);
-    });
-};
+// В конце файла должно быть:
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
+});
 
 startServer();

@@ -1,109 +1,36 @@
 version: '3.8'
 
 services:
-  # ===== POSTGRESQL (общая БД) =====
-  postgres:
-    image: postgres:16-alpine
-    container_name: postgres_lb
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: practice_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - lb_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ===== REDIS (общий кэш) =====
-  redis:
-    image: redis:7-alpine
-    container_name: redis_lb
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - lb_network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ===== BACKEND 1 =====
   backend1:
     build: ./backend
     container_name: backend1
     environment:
-      PORT: 3000
-      SERVER_ID: "backend_1"
-      PG_HOST: postgres
-      REDIS_HOST: redis
-      JWT_SECRET: load_balancing_secret_key_2024
-      REFRESH_SECRET: refresh_secret_key_for_lb
-    ports:
-      - "3001:3000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - PORT=3000
+      - SERVER_ID=backend_1_main
     networks:
-      - lb_network
+      - app-network
 
-  # ===== BACKEND 2 =====
   backend2:
     build: ./backend
     container_name: backend2
     environment:
-      PORT: 3000
-      SERVER_ID: "backend_2"
-      PG_HOST: postgres
-      REDIS_HOST: redis
-      JWT_SECRET: load_balancing_secret_key_2024
-      REFRESH_SECRET: refresh_secret_key_for_lb
-    ports:
-      - "3002:3000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - PORT=3000
+      - SERVER_ID=backend_2_main
     networks:
-      - lb_network
+      - app-network
 
-  # ===== BACKEND 3 (резервный) =====
   backend3:
     build: ./backend
     container_name: backend3
     environment:
-      PORT: 3000
-      SERVER_ID: "backend_3_backup"
-      PG_HOST: postgres
-      REDIS_HOST: redis
-      JWT_SECRET: load_balancing_secret_key_2024
-      REFRESH_SECRET: refresh_secret_key_for_lb
-    ports:
-      - "3003:3000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - PORT=3000
+      - SERVER_ID=backend_3_backup
     networks:
-      - lb_network
+      - app-network
 
-  # ===== NGINX (балансировщик) =====
   nginx:
     image: nginx:alpine
-    container_name: nginx_lb
+    container_name: nginx_balancer
     ports:
       - "80:80"
     volumes:
@@ -113,12 +40,8 @@ services:
       - backend2
       - backend3
     networks:
-      - lb_network
+      - app-network
 
 networks:
-  lb_network:
+  app-network:
     driver: bridge
-
-volumes:
-  postgres_data:
-  redis_data:
