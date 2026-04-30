@@ -16,3 +16,12 @@ npm run dev
 ![alt text](image-10.png)
 ![alt text](image-11.png)
 ![alt text](image-12.png)
+## Практическая работа №23
+
+cd /mnt/c/project/practicks\ 19-24
+# Тестирование
+* Тест балансировки
+for i in {1..10}; do
+  curl -s http://localhost/ | grep server
+done
+![alt text](image-13.png)
